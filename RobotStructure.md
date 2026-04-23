@@ -40,4 +40,5 @@ No visual, just a sensor frame inside the base. Helps `robot_localization` fuse 
 
 ### Inertials
 
-Every link needs mass and an inertia matrix or Gazebo breaks. Used the standard box/cylinder/sphere formulas. Doesn't need to be exact, just reasonable.
+Our links needs mass and an inertia matrix or else Gazebo will break. We used the standard box/cylinder/sphere formulas, to be approximate.
+
