@@ -158,7 +158,7 @@
 		<child link="camera_link"/>
 		<origin xyz="0.125 0 0.09" rpy="0 0 0"/>
 		<axis xyz="0 0 1"/>
-		<limit lower="-0.30" upper="0.30" effort="1.2" velocity="0.9"/>
+		<limit lower="-0.174533" upper="0.174533" effort="1.2" velocity="0.9"/>
 	</joint>
 
 	<!-- IMU frame intentionally has no visual/collision. -->
@@ -174,5 +174,82 @@
 		<child link="imu_link"/>
 		<origin xyz="0.0 0 0.066" rpy="0 0 0"/>
 	</joint>
+
+	<ros2_control name="GazeboSimSystem" type="system">
+		<hardware>
+			<plugin>gz_ros2_control/GazeboSimSystem</plugin>
+		</hardware>
+
+		<joint name="left_wheel_joint">
+			<command_interface name="velocity"/>
+			<state_interface name="position"/>
+			<state_interface name="velocity"/>
+		</joint>
+
+		<joint name="right_wheel_joint">
+			<command_interface name="velocity"/>
+			<state_interface name="position"/>
+			<state_interface name="velocity"/>
+		</joint>
+
+		<joint name="camera_joint">
+			<command_interface name="position"/>
+			<state_interface name="position"/>
+			<state_interface name="velocity"/>
+		</joint>
+	</ros2_control>
+
+	<gazebo>
+		<plugin filename="libgz_ros2_control-system.so" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+		</plugin>
+	</gazebo>
+
+	<gazebo reference="lidar_link">
+		<sensor name="lidar_sensor" type="gpu_lidar">
+			<update_rate>10</update_rate>
+			<topic>/scan</topic>
+			<lidar>
+				<scan>
+					<horizontal>
+						<samples>360</samples>
+						<resolution>1</resolution>
+						<min_angle>-3.14159</min_angle>
+						<max_angle>3.14159</max_angle>
+					</horizontal>
+				</scan>
+				<range>
+					<min>0.12</min>
+					<max>20.0</max>
+					<resolution>0.01</resolution>
+				</range>
+			</lidar>
+		</sensor>
+	</gazebo>
+
+	<gazebo reference="camera_link">
+		<sensor name="front_camera" type="camera">
+			<update_rate>15</update_rate>
+			<topic>/camera/image_raw</topic>
+			<camera>
+				<horizontal_fov>1.047</horizontal_fov>
+				<image>
+					<width>640</width>
+					<height>480</height>
+					<format>R8G8B8</format>
+				</image>
+				<clip>
+					<near>0.05</near>
+					<far>50.0</far>
+				</clip>
+			</camera>
+		</sensor>
+	</gazebo>
+
+	<gazebo reference="imu_link">
+		<sensor name="imu_sensor" type="imu">
+			<update_rate>50</update_rate>
+			<topic>/imu/data</topic>
+		</sensor>
+	</gazebo>
 
 </robot>
