@@ -24,6 +24,11 @@
 	<depend>position_controllers</depend>
 	<depend>ros_gz_sim</depend>
 	<depend>ros_gz_bridge</depend>
+	<depend>sensor_msgs</depend>
+	<depend>cv_bridge</depend>
+	<depend>nav2_bringup</depend>
+	<depend>slam_toolbox</depend>
+	<depend>nav2_msgs</depend>
 
 	<test_depend>ament_lint_auto</test_depend>
 	<test_depend>ament_lint_common</test_depend>

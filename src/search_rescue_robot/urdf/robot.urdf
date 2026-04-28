@@ -180,34 +180,29 @@
 		<origin xyz="0 0 0.085" rpy="0 0 0"/>
 	</joint>
 
-	<!-- ros2_control hardware interface -->
-	<ros2_control name="GazeboSimSystem" type="system">
-		<hardware>
-			<plugin>gz_ros2_control/GazeboSimSystem</plugin>
-		</hardware>
-
-		<joint name="left_wheel_joint">
-			<command_interface name="velocity"/>
-			<state_interface name="position"/>
-			<state_interface name="velocity"/>
-		</joint>
-
-		<joint name="right_wheel_joint">
-			<command_interface name="velocity"/>
-			<state_interface name="position"/>
-			<state_interface name="velocity"/>
-		</joint>
-
-		<joint name="camera_joint">
-			<command_interface name="position"/>
-			<state_interface name="position"/>
-			<state_interface name="velocity"/>
-		</joint>
-	</ros2_control>
-
-	<!-- Gazebo ros2_control plugin -->
+	<!-- Gazebo DiffDrive plugin (replaces ros2_control for wheels) -->
 	<gazebo>
-		<plugin filename="libgz_ros2_control-system.so" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+		<plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
+			<left_joint>left_wheel_joint</left_joint>
+			<right_joint>right_wheel_joint</right_joint>
+			<wheel_separation>0.33</wheel_separation>
+			<wheel_radius>0.075</wheel_radius>
+			<odom_publish_frequency>50</odom_publish_frequency>
+			<topic>/cmd_vel_out</topic>
+			<odom_topic>/odom</odom_topic>
+			<tf_topic>/tf</tf_topic>
+			<frame_id>odom</frame_id>
+			<child_frame_id>base_link</child_frame_id>
+		</plugin>
+	</gazebo>
+
+	<!-- Gazebo JointStatePublisher for TF -->
+	<gazebo>
+		<plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
+			<topic>/joint_states</topic>
+			<joint_name>left_wheel_joint</joint_name>
+			<joint_name>right_wheel_joint</joint_name>
+			<joint_name>camera_joint</joint_name>
 		</plugin>
 	</gazebo>
 

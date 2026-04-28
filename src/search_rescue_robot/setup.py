@@ -24,8 +24,8 @@ setup(
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [
-            "robot_controller = search_rescue_robot.robot_controller:main",
-            "mission_controller = search_rescue_robot.mission_controller:main",
+            "perception_node = search_rescue_robot.perception_node:main",
+            "battery_simulator = search_rescue_robot.battery_simulator:main",
         ],
     },
 )

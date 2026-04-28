@@ -1,0 +1,31 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 50
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    diff_drive_controller:
+      type: diff_drive_controller/DiffDriveController
+
+    camera_controller:
+      type: position_controllers/JointGroupPositionController
+
+diff_drive_controller:
+  ros__parameters:
+    left_wheel_names: ["left_wheel_joint"]
+    right_wheel_names: ["right_wheel_joint"]
+    wheel_separation: 0.33
+    wheel_radius: 0.075
+    use_stamped_vel: false
+    publish_rate: 50.0
+    odom_frame_id: odom
+    base_frame_id: base_link
+    publish_odom: true
+    publish_odom_tf: true
+    publish_wheel_data: false
+
+camera_controller:
+  ros__parameters:
+    joints:
+      - camera_joint
