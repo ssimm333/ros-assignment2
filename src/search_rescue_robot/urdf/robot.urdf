@@ -1,167 +1,172 @@
 <?xml version="1.0"?>
-<robot name="rescue_rover_a2">
+<robot name="rescue_robot">
 
-	<material name="body_gray">
-		<color rgba="0.32 0.34 0.37 1.0"/>
+	<material name="dark_gray">
+		<color rgba="0.3 0.3 0.3 1.0"/>
 	</material>
-	<material name="wheel_black">
-		<color rgba="0.08 0.08 0.08 1.0"/>
+	<material name="black">
+		<color rgba="0.05 0.05 0.05 1.0"/>
 	</material>
-	<material name="sensor_cyan">
-		<color rgba="0.10 0.55 0.60 1.0"/>
+	<material name="teal">
+		<color rgba="0.0 0.5 0.5 1.0"/>
 	</material>
 
-	<!-- Main body: compact rectangular chassis. -->
+	<!-- Base chassis: 0.4 x 0.3 x 0.15m box, 5kg -->
 	<link name="base_link">
 		<visual>
-			<origin xyz="0 0 0.055" rpy="0 0 0"/>
+			<origin xyz="0 0 0.075" rpy="0 0 0"/>
 			<geometry>
-				<box size="0.29 0.17 0.11"/>
+				<box size="0.4 0.3 0.15"/>
 			</geometry>
-			<material name="body_gray"/>
+			<material name="dark_gray"/>
 		</visual>
 		<collision>
-			<origin xyz="0 0 0.055" rpy="0 0 0"/>
+			<origin xyz="0 0 0.075" rpy="0 0 0"/>
 			<geometry>
-				<box size="0.29 0.17 0.11"/>
+				<box size="0.4 0.3 0.15"/>
 			</geometry>
 		</collision>
 		<inertial>
-			<origin xyz="0 0 0.055" rpy="0 0 0"/>
-			<mass value="4.8"/>
-			<inertia ixx="0.020" ixy="0.0" ixz="0.0" iyy="0.039" iyz="0.0" izz="0.046"/>
+			<origin xyz="0 0 0.075" rpy="0 0 0"/>
+			<mass value="5.0"/>
+			<inertia ixx="0.046875" ixy="0.0" ixz="0.0" iyy="0.076042" iyz="0.0" izz="0.104167"/>
 		</inertial>
 	</link>
 
+	<!-- Left wheel: cylinder r=0.075, w=0.03, 0.3kg -->
 	<link name="left_wheel">
 		<visual>
 			<origin xyz="0 0 0" rpy="-1.5708 0 0"/>
 			<geometry>
-				<cylinder radius="0.07" length="0.035"/>
+				<cylinder radius="0.075" length="0.03"/>
 			</geometry>
-			<material name="wheel_black"/>
+			<material name="black"/>
 		</visual>
 		<collision>
 			<origin xyz="0 0 0" rpy="-1.5708 0 0"/>
 			<geometry>
-				<cylinder radius="0.07" length="0.035"/>
+				<cylinder radius="0.075" length="0.03"/>
 			</geometry>
 		</collision>
 		<inertial>
-			<mass value="0.34"/>
-			<inertia ixx="0.00087" ixy="0.0" ixz="0.0" iyy="0.00087" iyz="0.0" izz="0.00083"/>
+			<mass value="0.3"/>
+			<inertia ixx="0.000444" ixy="0.0" ixz="0.0" iyy="0.000444" iyz="0.0" izz="0.000844"/>
 		</inertial>
 	</link>
 
 	<joint name="left_wheel_joint" type="continuous">
 		<parent link="base_link"/>
 		<child link="left_wheel"/>
-		<origin xyz="-0.06 0.102 0.07" rpy="0 0 0"/>
+		<origin xyz="-0.05 0.165 0.075" rpy="0 0 0"/>
 		<axis xyz="0 1 0"/>
 	</joint>
 
+	<!-- Right wheel: cylinder r=0.075, w=0.03, 0.3kg -->
 	<link name="right_wheel">
 		<visual>
 			<origin xyz="0 0 0" rpy="-1.5708 0 0"/>
 			<geometry>
-				<cylinder radius="0.07" length="0.035"/>
+				<cylinder radius="0.075" length="0.03"/>
 			</geometry>
-			<material name="wheel_black"/>
+			<material name="black"/>
 		</visual>
 		<collision>
 			<origin xyz="0 0 0" rpy="-1.5708 0 0"/>
 			<geometry>
-				<cylinder radius="0.07" length="0.035"/>
+				<cylinder radius="0.075" length="0.03"/>
 			</geometry>
 		</collision>
 		<inertial>
-			<mass value="0.34"/>
-			<inertia ixx="0.00087" ixy="0.0" ixz="0.0" iyy="0.00087" iyz="0.0" izz="0.00083"/>
+			<mass value="0.3"/>
+			<inertia ixx="0.000444" ixy="0.0" ixz="0.0" iyy="0.000444" iyz="0.0" izz="0.000844"/>
 		</inertial>
 	</link>
 
 	<joint name="right_wheel_joint" type="continuous">
 		<parent link="base_link"/>
 		<child link="right_wheel"/>
-		<origin xyz="-0.06 -0.102 0.07" rpy="0 0 0"/>
+		<origin xyz="-0.05 -0.165 0.075" rpy="0 0 0"/>
 		<axis xyz="0 1 0"/>
 	</joint>
 
+	<!-- Caster: sphere r=0.025, 0.1kg -->
 	<link name="caster_wheel">
 		<visual>
 			<geometry>
-				<sphere radius="0.028"/>
+				<sphere radius="0.025"/>
 			</geometry>
-			<material name="wheel_black"/>
+			<material name="black"/>
 		</visual>
 		<collision>
 			<geometry>
-				<sphere radius="0.028"/>
+				<sphere radius="0.025"/>
 			</geometry>
 		</collision>
 		<inertial>
-			<mass value="0.12"/>
-			<inertia ixx="0.000038" ixy="0.0" ixz="0.0" iyy="0.000038" iyz="0.0" izz="0.000038"/>
+			<mass value="0.1"/>
+			<inertia ixx="0.000025" ixy="0.0" ixz="0.0" iyy="0.000025" iyz="0.0" izz="0.000025"/>
 		</inertial>
 	</link>
 
 	<joint name="caster_joint" type="fixed">
 		<parent link="base_link"/>
 		<child link="caster_wheel"/>
-		<origin xyz="0.115 0 0.028" rpy="0 0 0"/>
+		<origin xyz="0.15 0 0.025" rpy="0 0 0"/>
 	</joint>
 
+	<!-- LiDAR: cylinder r=0.035, h=0.03, 0.15kg -->
 	<link name="lidar_link">
 		<visual>
 			<geometry>
-				<cylinder radius="0.032" length="0.03"/>
+				<cylinder radius="0.035" length="0.03"/>
 			</geometry>
-			<material name="sensor_cyan"/>
+			<material name="teal"/>
 		</visual>
 		<collision>
 			<geometry>
-				<cylinder radius="0.032" length="0.03"/>
+				<cylinder radius="0.035" length="0.03"/>
 			</geometry>
 		</collision>
 		<inertial>
-			<mass value="0.18"/>
-			<inertia ixx="0.000058" ixy="0.0" ixz="0.0" iyy="0.000058" iyz="0.0" izz="0.000092"/>
+			<mass value="0.15"/>
+			<inertia ixx="0.000057" ixy="0.0" ixz="0.0" iyy="0.000057" iyz="0.0" izz="0.000092"/>
 		</inertial>
 	</link>
 
 	<joint name="lidar_joint" type="fixed">
 		<parent link="base_link"/>
 		<child link="lidar_link"/>
-		<origin xyz="-0.085 0 0.14" rpy="0 0 0"/>
+		<origin xyz="0 0 0.165" rpy="0 0 0"/>
 	</joint>
 
+	<!-- Camera: box 0.05 x 0.04 x 0.03, 0.1kg, revolute ±15° -->
 	<link name="camera_link">
 		<visual>
 			<geometry>
-				<box size="0.05 0.04 0.028"/>
+				<box size="0.05 0.04 0.03"/>
 			</geometry>
-			<material name="sensor_cyan"/>
+			<material name="teal"/>
 		</visual>
 		<collision>
 			<geometry>
-				<box size="0.05 0.04 0.028"/>
+				<box size="0.05 0.04 0.03"/>
 			</geometry>
 		</collision>
 		<inertial>
-			<mass value="0.10"/>
-			<inertia ixx="0.000019" ixy="0.0" ixz="0.0" iyy="0.000028" iyz="0.0" izz="0.000035"/>
+			<mass value="0.1"/>
+			<inertia ixx="0.000021" ixy="0.0" ixz="0.0" iyy="0.000028" iyz="0.0" izz="0.000034"/>
 		</inertial>
 	</link>
 
 	<joint name="camera_joint" type="revolute">
 		<parent link="base_link"/>
 		<child link="camera_link"/>
-		<origin xyz="0.125 0 0.09" rpy="0 0 0"/>
+		<origin xyz="0.2 0 0.12" rpy="0 0 0"/>
 		<axis xyz="0 0 1"/>
-		<limit lower="-0.174533" upper="0.174533" effort="1.2" velocity="0.9"/>
+		<limit lower="-0.2618" upper="0.2618" effort="1.0" velocity="1.0"/>
 	</joint>
 
-	<!-- IMU frame intentionally has no visual/collision. -->
+	<!-- IMU: no visual, just a sensor frame -->
 	<link name="imu_link">
 		<inertial>
 			<mass value="0.02"/>
@@ -172,9 +177,10 @@
 	<joint name="imu_joint" type="fixed">
 		<parent link="base_link"/>
 		<child link="imu_link"/>
-		<origin xyz="0.0 0 0.066" rpy="0 0 0"/>
+		<origin xyz="0 0 0.085" rpy="0 0 0"/>
 	</joint>
 
+	<!-- ros2_control hardware interface -->
 	<ros2_control name="GazeboSimSystem" type="system">
 		<hardware>
 			<plugin>gz_ros2_control/GazeboSimSystem</plugin>
@@ -199,11 +205,13 @@
 		</joint>
 	</ros2_control>
 
+	<!-- Gazebo ros2_control plugin -->
 	<gazebo>
 		<plugin filename="libgz_ros2_control-system.so" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
 		</plugin>
 	</gazebo>
 
+	<!-- LiDAR sensor: 360° scan -->
 	<gazebo reference="lidar_link">
 		<sensor name="lidar_sensor" type="gpu_lidar">
 			<update_rate>10</update_rate>
@@ -226,6 +234,7 @@
 		</sensor>
 	</gazebo>
 
+	<!-- Camera sensor -->
 	<gazebo reference="camera_link">
 		<sensor name="front_camera" type="camera">
 			<update_rate>15</update_rate>
@@ -245,6 +254,7 @@
 		</sensor>
 	</gazebo>
 
+	<!-- IMU sensor -->
 	<gazebo reference="imu_link">
 		<sensor name="imu_sensor" type="imu">
 			<update_rate>50</update_rate>
