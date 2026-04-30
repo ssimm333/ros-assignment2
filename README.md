@@ -1,175 +1,85 @@
-# ROS Assignment 2
-Search and Rescue Robot Project
+# Search and Rescue Robot — ROS 2 Jazzy + Gazebo Harmonic
 
-Assignment Details can be found here -> [here](SearchandRescueRobotProject.pdf)
+## Prerequisites
 
-# Installation
+- ROS 2 Jazzy
+- Gazebo Harmonic
+- Required packages:
+  ```bash
+  sudo apt install ros-jazzy-ros-gz ros-jazzy-robot-state-publisher \
+    ros-jazzy-controller-manager ros-jazzy-diff-drive-controller \
+    ros-jazzy-joint-state-broadcaster ros-jazzy-gz-ros2-control \
+    ros-jazzy-nav2-bringup ros-jazzy-slam-toolbox \
+    ros-jazzy-nav2-mppi-controller \
+    ros-jazzy-teleop-twist-keyboard
+  ```
 
-## System prep
-```bash
-sudo apt update && sudo apt upgrade -y
-sudo apt install -y curl gnupg lsb-release software-properties-common \
-  build-essential cmake git python3-pip python3-colcon-common-extensions \
-  python3-rosdep python3-vcstool
-```
-
-## install Ros2 Jazzy
-```bash
-sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key \
-  -o /usr/share/keyrings/ros-archive-keyring.gpg
-sudo apt update
-sudo apt install -y ros-jazzy-desktop
-```
-
-## Add Gazebo Harmonic
-```bash
-sudo curl -sSL https://packages.osrfoundation.org/gazebo.gpg \
-  -o /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg
-sudo apt update
-sudo apt install -y gz-harmonic
-```
-
-## Ros2 + Gazebo Bridge and Project Dependencies
-```bash
-sudo apt install -y \
-  ros-jazzy-ros-gz \
-  ros-jazzy-ros2-control \
-  ros-jazzy-ros2-controllers \
-  ros-jazzy-nav2-bringup \
-  ros-jazzy-navigation2 \
-  ros-jazzy-robot-state-publisher \
-  ros-jazzy-joint-state-publisher \
-  ros-jazzy-joint-state-publisher-gui \
-  ros-jazzy-xacro \
-  ros-jazzy-tf2-ros \
-  ros-jazzy-tf2-tools \
-  ros-jazzy-behaviortree-cpp \
-  ros-jazzy-nav2-bt-navigator \
-  ros-jazzy-slam-toolbox \
-  ros-jazzy-robot-localization \
-  python3-colcon-common-extensions
-```
-
-## Source Ros2 automatically
-```bash
-echo "source /opt/ros/jazzy/setup.bash" >> ~/.bashrc
-echo "export GZ_VERSION=harmonic" >> ~/.bashrc
-source ~/.bashrc
-```
-
-## Init Rosdep
-```bash
-sudo rosdep init
-rosdep update
-```
-
-## Create workspace
-```bash
-mkdir -p ~/ros2_ws/src
-cd ~/ros2_ws
-colcon build
-source install/setup.bash
-echo "source ~/ros2_ws/install/setup.bash" >> ~/.bashrc
-```
-
-# Project layout (this repository)
-
-This repository itself is a ROS 2 workspace root. The expected structure is:
-
-```text
-A2/
-  src/
-    search_rescue_robot/
-      package.xml
-      setup.py
-      launch/
-      config/
-      urdf/
-      worlds/
-  build/
-  install/
-  log/
-```
-
-# Build and run this project
-
-Use Linux or WSL with ROS 2 Jazzy installed.
+## Build
 
 ```bash
-cd /path/to/A2
-source /opt/ros/jazzy/setup.bash
+cd ~/ros2_ws   # or wherever ros-assignment2/ lives
 colcon build --packages-select search_rescue_robot
 source install/setup.bash
 ```
 
-Run full simulation and mission stack:
+## Run
+
+### Simulation only (Gazebo + robot + controllers)
 
 ```bash
-ros2 launch search_rescue_robot full_system.launch.py
+ros2 launch search_rescue_robot sim.launch.py
 ```
 
-Run only simulation + robot spawn:
+This launches:
+- Gazebo Harmonic with the assignment world
+- Robot spawned at origin (0, 0)
+- ros2_control: joint_state_broadcaster + diff_drive_controller
+- ros_gz_bridge for sensors (/clock, /scan, /camera/image_raw, /imu/data)
+
+### Navigation (Nav2 + SLAM + simulation)
 
 ```bash
-ros2 launch search_rescue_robot sim_spawn.launch.py
+ros2 launch search_rescue_robot nav2.launch.py
 ```
 
-Run only mission controller (if simulation already running):
+With RViz2:
+```bash
+ros2 launch search_rescue_robot nav2.launch.py use_rviz:=true
+```
+
+This launches everything from sim.launch.py plus:
+- SLAM Toolbox (online async mapping)
+- Nav2 stack (MPPI controller, NavfnPlanner, behavior server, BT navigator)
+- Twist relay (converts Nav2's Twist → TwistStamped for diff_drive_controller)
+
+In RViz2, click "Nav2 Goal" to send the robot to a point on the map.
+
+### Test driving (manual)
+
+In a separate terminal:
+```bash
+# Via diff_drive_controller (stamped twist)
+ros2 topic pub /diff_drive_controller/cmd_vel geometry_msgs/msg/TwistStamped \
+  "{twist: {linear: {x: 0.2}}}" --once
+
+# Or via teleop keyboard (requires twist_relay to be running, or use nav2.launch.py)
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+```
+
+### Verify topics
 
 ```bash
-ros2 launch search_rescue_robot mission.launch.py
+ros2 topic list
+ros2 topic echo /scan                          # lidar data
+ros2 topic echo /diff_drive_controller/odom    # odometry
+ros2 topic echo /joint_states                  # wheel + camera joint states
+ros2 topic echo /map                           # SLAM map (when nav2.launch.py is running)
 ```
 
-Check mission status service:
+### Check TF tree
 
 ```bash
-ros2 service call /mission_controller/get_mission_status std_srvs/srv/Trigger "{}"
+ros2 run tf2_tools view_frames
 ```
 
-View mission events:
-
-```bash
-ros2 topic echo /mission/events
-```
-
-# Assignment requirement coverage
-
-## Part 1 - Robot modelling
-- URDF model: `src/search_rescue_robot/urdf/robot.urdf`
-- Includes base, differential wheels, caster, lidar, camera pan joint, IMU link
-
-## Part 2 - Spawn robot in Gazebo
-- Launch file: `src/search_rescue_robot/launch/sim_spawn.launch.py`
-- Spawns with robot_state_publisher and `ros_gz_sim create` at x=0, y=0
-
-## Part 3 - Gazebo plugins and sensors
-- URDF sensor blocks for camera, lidar, and IMU
-- Gazebo and ROS bridge configured in `sim_spawn.launch.py`
-
-## Part 4 - ROS 2 Control
-- Control config: `src/search_rescue_robot/config/ros2_control.yaml`
-- ros2_control interfaces in URDF and controller spawners in simulation launch
-
-## Part 5 - Behaviour Tree and mission logic
-- Mission node: `src/search_rescue_robot/search_rescue_robot/mission_controller.py`
-- Behavior tree primitives: `src/search_rescue_robot/search_rescue_robot/behavior_tree.py`
-- Includes sequence, fallback, timeout decorator, and asynchronous navigation action usage
-- Handles:
-  - Survivor + medical kit task
-  - Dam scan with camera pan left/right
-  - Low battery docking behavior
-  - Fire safety distance check
-  - Exit task
- - Navigation is custom waypoint-based, using odometry plus direct velocity control rather than Nav2.
-
-## Report template
-- Fill and submit: `REPORT_TEMPLATE.md`
-
-# Notes
-
-- The simulation world is packaged at `src/search_rescue_robot/worlds/assignment_world.sdf`.
-- `ros2_control` settings are in `src/search_rescue_robot/config/ros2_control.yaml`.
-- Velocity commands are sent to `/diff_drive_controller/cmd_vel_unstamped`.
-- If `colcon` is not found, install `python3-colcon-common-extensions` in your ROS environment.
-- On Windows PowerShell, you should run ROS 2 Linux workflows inside WSL where Jazzy and Gazebo are installed.
-
+Expected: map -> odom -> base_link -> (left_wheel, right_wheel, caster_wheel, lidar_link, camera_link, imu_link)

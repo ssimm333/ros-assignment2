@@ -1,0 +1,8 @@
+float32 angle
+float32 tolerance
+float32 rotation_speed
+---
+bool success
+---
+float32 current_angle
+float32 angle_diff

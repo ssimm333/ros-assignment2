@@ -1,0 +1,11 @@
+<root main_tree_to_execute="test_tree">
+    <BehaviorTree ID="test_tree">
+        <Sequence name="root_sequence">
+            <PoseRecieved topic_name="pose_goal" pose="{pose}"/>
+            <GetAlignRotation target_pose="{pose}" align_rotation="{align_rotation}"/>
+            <RotateX angle="{align_rotation}" speed="0.2" tolerance="0.1"/>
+            <GetDistance target_pose="{pose}" distance="{distance}"/>
+            <DriveX speed="0.2" distance="{distance}" tolerance="0.1"/>
+        </Sequence>
+    </BehaviorTree>
+</root>

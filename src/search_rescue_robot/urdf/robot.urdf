@@ -180,29 +180,37 @@
 		<origin xyz="0 0 0.085" rpy="0 0 0"/>
 	</joint>
 
-	<!-- Gazebo DiffDrive plugin (replaces ros2_control for wheels) -->
-	<gazebo>
-		<plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
-			<left_joint>left_wheel_joint</left_joint>
-			<right_joint>right_wheel_joint</right_joint>
-			<wheel_separation>0.33</wheel_separation>
-			<wheel_radius>0.075</wheel_radius>
-			<odom_publish_frequency>50</odom_publish_frequency>
-			<topic>/cmd_vel_out</topic>
-			<odom_topic>/odom</odom_topic>
-			<tf_topic>/tf</tf_topic>
-			<frame_id>odom</frame_id>
-			<child_frame_id>base_link</child_frame_id>
-		</plugin>
-	</gazebo>
+	<!-- ros2_control hardware interface for wheels -->
+	<ros2_control name="GazeboSimSystem" type="system">
+		<hardware>
+			<plugin>gz_ros2_control/GazeboSimSystem</plugin>
+		</hardware>
+		<joint name="left_wheel_joint">
+			<command_interface name="velocity">
+				<param name="min">-1.0</param>
+				<param name="max">1.0</param>
+			</command_interface>
+			<state_interface name="position"/>
+			<state_interface name="velocity"/>
+		</joint>
+		<joint name="right_wheel_joint">
+			<command_interface name="velocity">
+				<param name="min">-1.0</param>
+				<param name="max">1.0</param>
+			</command_interface>
+			<state_interface name="position"/>
+			<state_interface name="velocity"/>
+		</joint>
+		<joint name="camera_joint">
+			<state_interface name="position"/>
+			<state_interface name="velocity"/>
+		</joint>
+	</ros2_control>
 
-	<!-- Gazebo JointStatePublisher for TF -->
+	<!-- gz_ros2_control Gazebo plugin — loads controllers from YAML -->
 	<gazebo>
-		<plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
-			<topic>/joint_states</topic>
-			<joint_name>left_wheel_joint</joint_name>
-			<joint_name>right_wheel_joint</joint_name>
-			<joint_name>camera_joint</joint_name>
+		<plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+			<parameters>{CONFIG_PATH}</parameters>
 		</plugin>
 	</gazebo>
 
@@ -211,6 +219,7 @@
 		<sensor name="lidar_sensor" type="gpu_lidar">
 			<update_rate>10</update_rate>
 			<topic>/scan</topic>
+			<gz_frame_id>lidar_link</gz_frame_id>
 			<lidar>
 				<scan>
 					<horizontal>
@@ -234,6 +243,7 @@
 		<sensor name="front_camera" type="camera">
 			<update_rate>15</update_rate>
 			<topic>/camera/image_raw</topic>
+			<gz_frame_id>camera_link</gz_frame_id>
 			<camera>
 				<horizontal_fov>1.047</horizontal_fov>
 				<image>
@@ -254,6 +264,7 @@
 		<sensor name="imu_sensor" type="imu">
 			<update_rate>50</update_rate>
 			<topic>/imu/data</topic>
+			<gz_frame_id>imu_link</gz_frame_id>
 		</sensor>
 	</gazebo>
 
