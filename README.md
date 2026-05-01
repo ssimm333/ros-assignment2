@@ -11,14 +11,15 @@
     ros-jazzy-joint-state-broadcaster ros-jazzy-gz-ros2-control \
     ros-jazzy-nav2-bringup ros-jazzy-slam-toolbox \
     ros-jazzy-nav2-mppi-controller \
-    ros-jazzy-teleop-twist-keyboard
+    ros-jazzy-teleop-twist-keyboard \
+    ros-jazzy-behaviortree-cpp
   ```
 
 ## Build
 
 ```bash
 cd ~/ros2_ws   # or wherever ros-assignment2/ lives
-colcon build --packages-select search_rescue_robot
+colcon build --packages-select search_rescue_robot rescue_bt
 source install/setup.bash
 ```
 
@@ -53,6 +54,27 @@ This launches everything from sim.launch.py plus:
 - Twist relay (converts Nav2's Twist → TwistStamped for diff_drive_controller)
 
 In RViz2, click "Nav2 Goal" to send the robot to a point on the map.
+
+### Full mission (autonomous)
+
+```bash
+ros2 launch search_rescue_robot mission.launch.py
+```
+
+With RViz2:
+```bash
+ros2 launch search_rescue_robot mission.launch.py use_rviz:=true
+```
+
+This launches everything from nav2.launch.py plus:
+- Battery simulator (drains at 0.5%/s, recharges when docked)
+- BehaviorTree.CPP mission controller (starts after 15s delay for Nav2 init)
+
+The robot will autonomously:
+1. Navigate to survivor → wait → publish TF → get medical kit → return
+2. Navigate to dam → scan with camera (centre, left, right)
+3. Dock and recharge if battery drops below 20%
+4. Navigate to exit and wait
 
 ### Test driving (manual)
 

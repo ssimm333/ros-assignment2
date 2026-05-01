@@ -17,7 +17,7 @@ class BatterySimulator(Node):
         super().__init__('battery_simulator')
 
         # Parameters
-        self.declare_parameter('drain_rate', 0.5)       # % per second
+        self.declare_parameter('drain_rate', 0.05)      # % per second
         self.declare_parameter('charge_rate', 2.0)       # % per second when docked
         self.declare_parameter('low_threshold', 20.0)    # % — triggers low warning
         self.declare_parameter('full_threshold', 90.0)   # % — clears low warning

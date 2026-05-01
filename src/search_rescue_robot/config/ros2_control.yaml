@@ -32,13 +32,13 @@ diff_drive_controller:
 
     # Velocity limits
     linear.x.has_velocity_limits: true
-    linear.x.max_velocity: 0.5
+    linear.x.max_velocity: 1.5
     linear.x.has_acceleration_limits: true
-    linear.x.max_acceleration: 1.0
+    linear.x.max_acceleration: 2.5
     angular.z.has_velocity_limits: true
-    angular.z.max_velocity: 1.5
+    angular.z.max_velocity: 3.0
     angular.z.has_acceleration_limits: true
-    angular.z.max_acceleration: 3.0
+    angular.z.max_acceleration: 5.0
 
     # TF
     pose_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]

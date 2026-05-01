@@ -1,0 +1,123 @@
+<root BTCPP_format="4" main_tree_to_execute="RescueMission">
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       DockAndRecharge subtree — shared by all battery-guarded actions
+       Navigates to docking station, sets docked, waits for recharge.
+       NOTE: PublishDockStatus(false) is handled by the PARENT after
+       each ReactiveSequence block (avoids ReactiveFallback race).
+       ═══════════════════════════════════════════════════════════════ -->
+  <BehaviorTree ID="DockAndRecharge">
+    <Sequence name="dock_and_recharge">
+      <NavigateToWaypoint x="23.5" y="0.0" description="docking_station"/>
+      <PublishDockStatus docked="true"/>
+      <WaitForBatteryOK/>
+    </Sequence>
+  </BehaviorTree>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       Main mission tree
+       ═══════════════════════════════════════════════════════════════ -->
+  <BehaviorTree ID="RescueMission">
+    <ReactiveSequence name="fire_guard">
+      <!-- Task 4: Fire safety — checked every tick -->
+      <CheckFireSafe/>
+
+      <Sequence name="mission">
+
+        <!-- ─── Task 1: Medical Kit to Survivor (10 marks) ─────── -->
+        <Sequence name="task1_survivor_rescue">
+
+          <!-- 1a. Navigate to survivor -->
+          <ReactiveSequence>
+            <ReactiveFallback>
+              <CheckBatteryOK/>
+              <SubTree ID="DockAndRecharge"/>
+            </ReactiveFallback>
+            <Timeout msec="600000">
+              <NavigateToWaypoint x="15.1" y="11.9" description="survivor"/>
+            </Timeout>
+          </ReactiveSequence>
+          <PublishDockStatus docked="false"/>
+
+          <!-- 1b. Stop for 1 second at survivor -->
+          <WaitSeconds seconds="1.0"/>
+
+          <!-- 1c. Publish survivor TF -->
+          <PublishObjectTF frame_name="survivor_location" x="15.1" y="13.4"/>
+
+          <!-- 1d. Navigate to medical kit -->
+          <ReactiveSequence>
+            <ReactiveFallback>
+              <CheckBatteryOK/>
+              <SubTree ID="DockAndRecharge"/>
+            </ReactiveFallback>
+            <Timeout msec="600000">
+              <NavigateToWaypoint x="-6.3" y="-18.4" description="medical_kit"/>
+            </Timeout>
+          </ReactiveSequence>
+          <PublishDockStatus docked="false"/>
+
+          <!-- 1e. Return to survivor with med kit -->
+          <ReactiveSequence>
+            <ReactiveFallback>
+              <CheckBatteryOK/>
+              <SubTree ID="DockAndRecharge"/>
+            </ReactiveFallback>
+            <Timeout msec="600000">
+              <NavigateToWaypoint x="15.1" y="11.9" description="survivor_return"/>
+            </Timeout>
+          </ReactiveSequence>
+          <PublishDockStatus docked="false"/>
+
+        </Sequence>
+
+        <!-- ─── Task 2: Dam Scan (10 marks) ────────────────────── -->
+        <Sequence name="task2_dam_scan">
+
+          <!-- 2a. Navigate to dam -->
+          <ReactiveSequence>
+            <ReactiveFallback>
+              <CheckBatteryOK/>
+              <SubTree ID="DockAndRecharge"/>
+            </ReactiveFallback>
+            <Timeout msec="600000">
+              <NavigateToWaypoint x="8.7" y="-13.1" description="dam"/>
+            </Timeout>
+          </ReactiveSequence>
+          <PublishDockStatus docked="false"/>
+
+          <!-- 2b. Camera scan: centre → left → right → centre -->
+          <SetCameraAngle angle="0.0"/>
+          <WaitSeconds seconds="2.0"/>
+          <SetCameraAngle angle="0.1745"/>
+          <WaitSeconds seconds="2.0"/>
+          <SetCameraAngle angle="-0.1745"/>
+          <WaitSeconds seconds="2.0"/>
+          <SetCameraAngle angle="0.0"/>
+
+        </Sequence>
+
+        <!-- ─── Task 5: Exit Building (5 marks) ────────────────── -->
+        <Sequence name="task5_exit">
+
+          <ReactiveSequence>
+            <ReactiveFallback>
+              <CheckBatteryOK/>
+              <SubTree ID="DockAndRecharge"/>
+            </ReactiveFallback>
+            <Timeout msec="600000">
+              <NavigateToWaypoint x="2.9" y="15.7" description="exit"/>
+            </Timeout>
+          </ReactiveSequence>
+          <PublishDockStatus docked="false"/>
+
+          <!-- Wait at exit -->
+          <WaitSeconds seconds="5.0"/>
+
+        </Sequence>
+
+      </Sequence>
+    </ReactiveSequence>
+  </BehaviorTree>
+
+</root>
