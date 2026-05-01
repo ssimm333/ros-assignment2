@@ -33,6 +33,7 @@ setup(
     entry_points={
         'console_scripts': [
             'twist_relay = search_rescue_robot.twist_relay:main',
+            'battery_simulator = search_rescue_robot.battery_simulator:main',
         ],
     },
 )

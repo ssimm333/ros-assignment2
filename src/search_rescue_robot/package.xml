@@ -4,7 +4,8 @@
   <name>search_rescue_robot</name>
   <version>0.0.1</version>
   <description>Search and rescue robot: launch files, config, perception, and battery simulator</description>
-  <maintainer email="23366109@studentmail.ul.ie, 23356014@studentmail.ul.ie">Stanislav Simanovich, Maja Tomczyk</maintainer>
+  <maintainer email="23366109@studentmail.ul.ie">Stanislav Simanovich</maintainer>
+  <maintainer email="23356014@studentmail.ul.ie">Maja Tomczyk</maintainer>
   <license>MIT</license>
 
   <buildtool_depend>ament_python</buildtool_depend>
