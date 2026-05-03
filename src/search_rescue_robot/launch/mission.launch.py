@@ -20,7 +20,7 @@ from launch.actions import (
     IncludeLaunchDescription,
     TimerAction,
 )
-from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.launch_description_sources import PythonLaunchDescriptionSource 
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
@@ -30,7 +30,7 @@ def generate_launch_description():
 
     use_rviz = LaunchConfiguration('use_rviz', default='false')
 
-    # --- 1. Nav2 stack (includes sim.launch.py) ---
+    # Nav2 stack (includes sim.launch.py)
     nav2_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_share, 'launch', 'nav2.launch.py')
@@ -38,7 +38,7 @@ def generate_launch_description():
         launch_arguments={'use_rviz': use_rviz}.items(),
     )
 
-    # --- 2. Battery simulator ---
+    # Battery simulator
     battery_sim = Node(
         package='search_rescue_robot',
         executable='battery_simulator',
@@ -47,7 +47,7 @@ def generate_launch_description():
         output='screen',
     )
 
-    # --- 3. Mission BT node (delayed to let Nav2 fully start) ---
+    # 3. Mission BT node (delayed to let Nav2 fully start)
     mission_bt = TimerAction(
         period=25.0,
         actions=[

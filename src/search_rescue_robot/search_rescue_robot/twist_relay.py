@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Relay node: subscribes to /cmd_vel (Twist) from Nav2,
 publishes /diff_drive_controller/cmd_vel (TwistStamped) for ros2_control."""
 

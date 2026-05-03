@@ -17,19 +17,19 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
     pkg_share = get_package_share_directory('search_rescue_robot')
 
-    # --- Paths ---
+    # Paths
     urdf_file = os.path.join(pkg_share, 'urdf', 'robot.urdf')
     world_file = os.path.join(pkg_share, 'worlds', 'assignment_world.sdf')
     controller_yaml = os.path.join(pkg_share, 'config', 'ros2_control.yaml')
 
-    # --- Read URDF and substitute config path placeholder ---
+    # Read URDF and substitute config path placeholder
     with open(urdf_file, 'r') as f:
         robot_description_raw = f.read()
     robot_description = robot_description_raw.replace('{CONFIG_PATH}', controller_yaml)
 
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
 
-    # --- Launch Gazebo Harmonic ---
+    # Launch Gazebo Harmonic
     gz_sim = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             PathJoinSubstitution([
@@ -41,7 +41,7 @@ def generate_launch_description():
         launch_arguments=[('gz_args', ['-r -v 1 ', world_file])],
     )
 
-    # --- Robot State Publisher ---
+    #  Robot State Publisher 
     robot_state_publisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -53,7 +53,7 @@ def generate_launch_description():
         }],
     )
 
-    # --- Spawn robot in Gazebo ---
+    # Spawn the robot into Gazebo sim 
     gz_spawn_entity = Node(
         package='ros_gz_sim',
         executable='create',
@@ -68,7 +68,7 @@ def generate_launch_description():
         ],
     )
 
-    # --- Spawn controllers (sequenced after spawn) ---
+    # Spawn controllers after spawn
     joint_state_broadcaster_spawner = Node(
         package='controller_manager',
         executable='spawner',
@@ -83,7 +83,7 @@ def generate_launch_description():
         output='screen',
     )
 
-    # --- ros_gz_bridge: sensor topics only (drive handled by ros2_control) ---
+    # ros_gz_bridge
     bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
@@ -96,7 +96,7 @@ def generate_launch_description():
         ],
     )
 
-    # --- Event handlers: sequence controller spawning after entity spawn ---
+    # Event handlers:
     # Wait for entity to spawn, then start joint_state_broadcaster
     spawn_jsb_after_entity = RegisterEventHandler(
         event_handler=OnProcessExit(

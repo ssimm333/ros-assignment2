@@ -36,7 +36,7 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
     use_rviz = LaunchConfiguration('use_rviz', default='false')
 
-    # --- 1. Base simulation (Gazebo + robot + ros2_control) ---
+    # Base simulation (Gazebo + robot + ros2_control) ---
     sim_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_share, 'launch', 'sim.launch.py')
@@ -44,9 +44,9 @@ def generate_launch_description():
         launch_arguments=[('use_sim_time', use_sim_time)],
     )
 
-    # --- 2+3. Nav2 bringup ---
+    # Nav2 bringup
     nav2_group = GroupAction([
-        # SLAM Toolbox (from nav2_bringup — runs standalone)
+        # SLAM Toolbox
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 os.path.join(nav2_bringup_dir, 'launch', 'slam_launch.py')
@@ -59,7 +59,7 @@ def generate_launch_description():
             }.items(),
         ),
 
-        # Navigation stack — non-composition (separate processes, no segfault)
+        # Navigation stack — non-composition
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 os.path.join(pkg_share, 'launch', 'navigation.launch.py')
@@ -74,7 +74,7 @@ def generate_launch_description():
         ),
     ])
 
-    # --- 4. Twist relay: Nav2 cmd_vel (Twist) → controller (TwistStamped) ---
+    # Twist relay: Nav2 cmd_vel (Twist) → controller (TwistStamped)
     twist_relay = Node(
         package='search_rescue_robot',
         executable='twist_relay',
@@ -83,7 +83,7 @@ def generate_launch_description():
         parameters=[{'use_sim_time': use_sim_time}],
     )
 
-    # --- 5. RViz2 (optional) ---
+    # RViz2, We liked having this for debugging
     rviz2 = Node(
         package='rviz2',
         executable='rviz2',

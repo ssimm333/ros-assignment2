@@ -35,7 +35,7 @@ def generate_launch_description():
     use_respawn = LaunchConfiguration('use_respawn')
     log_level = LaunchConfiguration('log_level')
 
-    # --- Lifecycle-managed nodes (no docking_server, no route_server) ---
+    # Lifecycle-managed nodes (no docking_server, no route_server)
     lifecycle_nodes = [
         'controller_server',
         'smoother_server',
@@ -96,7 +96,7 @@ def generate_launch_description():
         'log_level', default_value='info', description='log level'
     )
 
-    # ---- Non-composition (standalone nodes) ----
+    # standalone nodes
     load_nodes = GroupAction(
         condition=IfCondition(PythonExpression(['not ', use_composition])),
         actions=[
@@ -193,7 +193,7 @@ def generate_launch_description():
         ],
     )
 
-    # ---- Composition (loaded into shared container) ----
+    # Composition , loaded into shared container
     load_composable_nodes = GroupAction(
         condition=IfCondition(use_composition),
         actions=[
