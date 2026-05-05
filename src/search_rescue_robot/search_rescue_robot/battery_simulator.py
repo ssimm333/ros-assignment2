@@ -12,18 +12,18 @@ class BatterySimulator(Node):
         super().__init__('battery_simulator')
 
         # Parameters
-        self.declare_parameter('drain_rate', 0.05)      # % per second
-        self.declare_parameter('charge_rate', 2.0)       # % per second when docked
-        self.declare_parameter('low_threshold', 20.0)    # % — triggers low warning
-        self.declare_parameter('full_threshold', 90.0)   # % — clears low warning
+        self.declare_parameter('drain_rate', 0.05)          # % per second
+        self.declare_parameter('charge_rate', 2.0)          # % per second when docked
+        self.declare_parameter('low_threshold', 20.0)       # % — triggers low warning
+        self.declare_parameter('full_threshold', 90.0)      # % — clears low warning
 
         self.drain_rate = self.get_parameter('drain_rate').value
         self.charge_rate = self.get_parameter('charge_rate').value
         self.low_threshold = self.get_parameter('low_threshold').value
         self.full_threshold = self.get_parameter('full_threshold').value
 
-        # State
-        self.level = 100.0    # battery percentage
+        # states
+        self.level = 100.0    # battery %
         self.is_docked = False
         self.is_low = False   # hysteresis flag
 
@@ -45,7 +45,7 @@ class BatterySimulator(Node):
         self.is_docked = msg.data
 
     def _tick(self):
-        # Drain or charge
+        # Drain or charging
         if self.is_docked:
             self.level = min(100.0, self.level + self.charge_rate)
         else:
@@ -64,7 +64,7 @@ class BatterySimulator(Node):
         msg.data = self.is_low
         self.pub.publish(msg)
 
-        # Periodic log every 10 seconds (level changes ~5% at default rate)
+        # Periodic log every 10 seconds 
         if int(self.level * 10) % 100 == 0:
             state = 'CHARGING' if self.is_docked else 'DRAINING'
             self.get_logger().info(f'Battery: {self.level:.1f}% [{state}]')
