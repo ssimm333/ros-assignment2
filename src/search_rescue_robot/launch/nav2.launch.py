@@ -1,15 +1,4 @@
-"""Nav2 + SLAM launch file.
-
-Launches:
-  1. sim.launch.py                  — Gazebo, robot, ros2_control controllers
-  2. nav2_bringup/slam_launch.py    — SLAM Toolbox (online async)
-  3. navigation.launch.py (custom)  — Nav2 stack WITHOUT docking_server / route_server
-  4. Twist relay                    — /cmd_vel (Twist) → /diff_drive_controller/cmd_vel (TwistStamped)
-  5. RViz2 (optional)               — pass use_rviz:=true
-
-Uses non-composition mode: each Nav2 node runs as its own process.
-Composition mode (shared process) segfaults on WSL2 during lifecycle config.
-"""
+"""Launches simulation + Nav2 + SLAM + twist relay."""
 
 import os
 

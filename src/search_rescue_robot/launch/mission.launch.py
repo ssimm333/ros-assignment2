@@ -1,14 +1,4 @@
-"""Full mission launch file.
-
-Launches:
-  1. nav2.launch.py           — Gazebo + robot + Nav2 + SLAM + twist relay
-  2. battery_simulator        — drains battery, recharges when docked
-  3. mission_bt_node          — BehaviorTree.CPP mission controller
-
-Usage:
-  ros2 launch search_rescue_robot mission.launch.py
-  ros2 launch search_rescue_robot mission.launch.py use_rviz:=true
-"""
+"""Launches the full rescue mission (nav2 + battery sim + BT controller)."""
 
 import os
 

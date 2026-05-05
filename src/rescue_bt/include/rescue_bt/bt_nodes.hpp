@@ -20,7 +20,7 @@
 namespace rescue_bt
 {
 
-// ─── Async Action: Navigate to a waypoint via Nav2 ───────────────
+// Navigate to a waypoint via Nav2 (async)
 
 class NavigateToWaypoint : public BT::StatefulActionNode
 {
@@ -47,7 +47,7 @@ private:
   bool goal_sent_;
 };
 
-// ─── Async Action: Wait for a specified duration ─────────────────
+// Wait for N seconds (async)
 
 class WaitSeconds : public BT::StatefulActionNode
 {
@@ -64,7 +64,7 @@ private:
   std::chrono::steady_clock::time_point end_time_;
 };
 
-// ─── Sync Action: Publish a static TF for a named object ────────
+// Publish a static TF for a named object
 
 class PublishObjectTF : public BT::SyncActionNode
 {
@@ -81,7 +81,7 @@ private:
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> tf_broadcaster_;
 };
 
-// ─── Sync Action: Set camera joint angle ─────────────────────────
+// Set camera joint angle
 
 class SetCameraAngle : public BT::SyncActionNode
 {
@@ -98,7 +98,7 @@ private:
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pub_;
 };
 
-// ─── Sync Action: Publish docking status ─────────────────────────
+// Publish docking status
 
 class PublishDockStatus : public BT::SyncActionNode
 {
@@ -115,7 +115,7 @@ private:
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr pub_;
 };
 
-// ─── Condition: Check battery is OK ──────────────────────────────
+// Check battery is OK
 
 class CheckBatteryOK : public BT::ConditionNode
 {
@@ -133,7 +133,7 @@ private:
   bool battery_low_;
 };
 
-// ─── Condition: Check distance to fire is safe ───────────────────
+// Check distance to fire is safe
 
 class CheckFireSafe : public BT::ConditionNode
 {
@@ -151,7 +151,7 @@ private:
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 };
 
-// ─── Async Action: Wait until battery is recharged ───────────────
+// Wait until battery is recharged (async)
 
 class WaitForBatteryOK : public BT::StatefulActionNode
 {

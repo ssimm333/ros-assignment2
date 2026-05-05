@@ -1,11 +1,6 @@
 <root BTCPP_format="4" main_tree_to_execute="RescueMission">
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       DockAndRecharge subtree — shared by all battery-guarded actions
-       Navigates to docking station, sets docked, waits for recharge.
-       NOTE: PublishDockStatus(false) is handled by the PARENT after
-       each ReactiveSequence block (avoids ReactiveFallback race).
-       ═══════════════════════════════════════════════════════════════ -->
+  <!-- DockAndRecharge subtree -->
   <BehaviorTree ID="DockAndRecharge">
     <Sequence name="dock_and_recharge">
       <NavigateToWaypoint x="23.5" y="0.0" description="docking_station"/>
@@ -14,9 +9,7 @@
     </Sequence>
   </BehaviorTree>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       Main mission tree
-       ═══════════════════════════════════════════════════════════════ -->
+  <!-- Main mission tree -->
   <BehaviorTree ID="RescueMission">
     <ReactiveSequence name="fire_guard">
       <!-- Task 4: Fire safety — checked every tick -->

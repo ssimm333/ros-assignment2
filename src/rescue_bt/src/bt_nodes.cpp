@@ -8,9 +8,7 @@
 namespace rescue_bt
 {
 
-// ═══════════════════════════════════════════════════════════════════
 // NavigateToWaypoint
-// ═══════════════════════════════════════════════════════════════════
 
 NavigateToWaypoint::NavigateToWaypoint(
   const std::string & name, const BT::NodeConfig & config)
@@ -135,9 +133,7 @@ void NavigateToWaypoint::onHalted()
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════
 // WaitSeconds
-// ═══════════════════════════════════════════════════════════════════
 
 WaitSeconds::WaitSeconds(
   const std::string & name, const BT::NodeConfig & config)
@@ -173,9 +169,7 @@ void WaitSeconds::onHalted()
 {
 }
 
-// ═══════════════════════════════════════════════════════════════════
 // PublishObjectTF
-// ═══════════════════════════════════════════════════════════════════
 
 PublishObjectTF::PublishObjectTF(
   const std::string & name, const BT::NodeConfig & config)
@@ -224,9 +218,7 @@ BT::NodeStatus PublishObjectTF::tick()
   return BT::NodeStatus::SUCCESS;
 }
 
-// ═══════════════════════════════════════════════════════════════════
 // SetCameraAngle
-// ═══════════════════════════════════════════════════════════════════
 
 SetCameraAngle::SetCameraAngle(
   const std::string & name, const BT::NodeConfig & config)
@@ -264,9 +256,7 @@ BT::NodeStatus SetCameraAngle::tick()
   return BT::NodeStatus::SUCCESS;
 }
 
-// ═══════════════════════════════════════════════════════════════════
 // PublishDockStatus
-// ═══════════════════════════════════════════════════════════════════
 
 PublishDockStatus::PublishDockStatus(
   const std::string & name, const BT::NodeConfig & config)
@@ -305,9 +295,7 @@ BT::NodeStatus PublishDockStatus::tick()
   return BT::NodeStatus::SUCCESS;
 }
 
-// ═══════════════════════════════════════════════════════════════════
 // CheckBatteryOK
-// ═══════════════════════════════════════════════════════════════════
 
 CheckBatteryOK::CheckBatteryOK(
   const std::string & name, const BT::NodeConfig & config)
@@ -344,9 +332,7 @@ BT::NodeStatus CheckBatteryOK::tick()
   return BT::NodeStatus::SUCCESS;
 }
 
-// ═══════════════════════════════════════════════════════════════════
 // CheckFireSafe
-// ═══════════════════════════════════════════════════════════════════
 
 static constexpr double FIRE_X = -14.2;
 static constexpr double FIRE_Y = 10.8;
@@ -396,9 +382,7 @@ BT::NodeStatus CheckFireSafe::tick()
   return BT::NodeStatus::SUCCESS;
 }
 
-// ═══════════════════════════════════════════════════════════════════
 // WaitForBatteryOK
-// ═══════════════════════════════════════════════════════════════════
 
 WaitForBatteryOK::WaitForBatteryOK(
   const std::string & name, const BT::NodeConfig & config)

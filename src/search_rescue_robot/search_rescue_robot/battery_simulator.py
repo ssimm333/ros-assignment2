@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""Battery simulator: drains over time, recharges when docked.
-
-Publishes Bool on /battery_level_low at 1 Hz.
-Subscribes to /is_docked (Bool) to trigger recharging.
-Uses hysteresis (low_threshold / full_threshold) to prevent toggling.
-"""
+"""Simulates battery drain and recharge for the rescue robot."""
 
 import rclpy
 from rclpy.node import Node

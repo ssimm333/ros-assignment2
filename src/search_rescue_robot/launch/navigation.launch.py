@@ -1,12 +1,4 @@
-"""Custom Nav2 navigation launch — stripped from nav2_bringup/navigation_launch.py.
-
-Removes docking_server (opennav_docking not installed) and route_server
-(nav2_route not installed) that cause the lifecycle manager to hang.
-All other Nav2 nodes are launched as-is from the upstream version.
-"""
-
-# Copyright (c) 2018 Intel Corporation  (original nav2_bringup file)
-# Licensed under the Apache License, Version 2.0
+"""Nav2 navigation launch file (based on nav2_bringup, without docking/route servers)."""
 
 import os
 

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Relay node: subscribes to /cmd_vel (Twist) from Nav2,
-publishes /diff_drive_controller/cmd_vel (TwistStamped) for ros2_control."""
+"""Bridges Nav2 Twist commands to TwistStamped for the diff drive controller."""
 
 import rclpy
 from rclpy.node import Node
