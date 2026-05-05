@@ -1,3 +1,9 @@
+# mission.launch.py
+# This is the top-level launch file that runs the entire rescue mission.
+# It brings up everything: Gazebo sim, Nav2, SLAM, the battery simulator,
+# and the behavior tree mission controller.
+# Usage: ros2 launch search_rescue_robot mission.launch.py
+
 """Launches the full rescue mission (nav2 + battery sim + BT controller)."""
 
 import os
@@ -20,7 +26,7 @@ def generate_launch_description():
 
     use_rviz = LaunchConfiguration('use_rviz', default='false')
 
-    # Nav2 stack (includes sim.launch.py)
+    # bring up the full Nav2 stack which also includes the simulation
     nav2_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_share, 'launch', 'nav2.launch.py')
@@ -28,7 +34,7 @@ def generate_launch_description():
         launch_arguments={'use_rviz': use_rviz}.items(),
     )
 
-    # Battery simulator
+    # battery simulator node that tracks charge level and publishes /battery_level_low
     battery_sim = Node(
         package='search_rescue_robot',
         executable='battery_simulator',
@@ -37,7 +43,10 @@ def generate_launch_description():
         output='screen',
     )
 
-    # 3. Mission BT node (delayed to let Nav2 fully start)
+    # the behavior tree mission controller.
+    # delayed by 25 seconds using TimerAction to give Nav2, SLAM, and
+    # all the controllers enough time to fully start up before the
+    # BT tries to send navigation goals.
     mission_bt = TimerAction(
         period=25.0,
         actions=[

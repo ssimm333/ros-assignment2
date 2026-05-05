@@ -1,3 +1,6 @@
+# setup.py for the search_rescue_robot package (ament_python build type)
+# installs the python nodes, launch files, URDF, world, and config files
+
 import os
 from glob import glob
 from setuptools import find_packages, setup
@@ -8,6 +11,8 @@ setup(
     name=package_name,
     version='0.0.1',
     packages=find_packages(exclude=['test']),
+    # data_files tells colcon where to install non-python files
+    # (launch files, URDF, world, config) into the share directory
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
@@ -30,6 +35,8 @@ setup(
     extras_require={
         'test': ['pytest'],
     },
+    # these entry points create the ros2 run executables
+    # e.g. ros2 run search_rescue_robot twist_relay
     entry_points={
         'console_scripts': [
             'twist_relay = search_rescue_robot.twist_relay:main',

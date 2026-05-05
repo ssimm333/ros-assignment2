@@ -1,3 +1,8 @@
+# nav2.launch.py
+# Top-level launch that brings up the simulation, SLAM, Nav2 navigation stack,
+# the twist relay, and optionally RViz for debugging.
+# This is included by mission.launch.py which adds the battery sim and BT node.
+
 """Launches simulation + Nav2 + SLAM + twist relay."""
 
 import os
@@ -25,7 +30,7 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
     use_rviz = LaunchConfiguration('use_rviz', default='false')
 
-    # Base simulation (Gazebo + robot + ros2_control) ---
+    # bring up the base simulation (Gazebo + robot + ros2_control)
     sim_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_share, 'launch', 'sim.launch.py')
@@ -33,9 +38,11 @@ def generate_launch_description():
         launch_arguments=[('use_sim_time', use_sim_time)],
     )
 
-    # Nav2 bringup
+    # launch Nav2 and SLAM together as a group.
+    # SLAM builds the map from lidar as the robot moves,
+    # Nav2 uses that map for path planning and obstacle avoidance.
     nav2_group = GroupAction([
-        # SLAM Toolbox
+        # SLAM Toolbox: builds a 2D occupancy grid map from /scan
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 os.path.join(nav2_bringup_dir, 'launch', 'slam_launch.py')
@@ -48,7 +55,8 @@ def generate_launch_description():
             }.items(),
         ),
 
-        # Navigation stack — non-composition
+        # Nav2 navigation stack (planner, controller, behavior server, etc.)
+        # using non-composition mode (each server is a separate process)
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 os.path.join(pkg_share, 'launch', 'navigation.launch.py')
@@ -63,7 +71,8 @@ def generate_launch_description():
         ),
     ])
 
-    # Twist relay: Nav2 cmd_vel (Twist) → controller (TwistStamped)
+    # twist relay converts Nav2's Twist messages to TwistStamped
+    # because the diff_drive_controller needs stamped velocity commands
     twist_relay = Node(
         package='search_rescue_robot',
         executable='twist_relay',
@@ -72,7 +81,7 @@ def generate_launch_description():
         parameters=[{'use_sim_time': use_sim_time}],
     )
 
-    # RViz2, We liked having this for debugging
+    # RViz2 for visualising the map, robot pose, and nav paths (optional)
     rviz2 = Node(
         package='rviz2',
         executable='rviz2',

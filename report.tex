@@ -1,0 +1,484 @@
+\documentclass[12pt, a4paper]{article}
+
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{float}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+
+% ── Colours ──────────────────────────────────────────────
+\definecolor{codeblue}{RGB}{0,80,160}
+\definecolor{codegray}{RGB}{100,100,100}
+\definecolor{codebg}{RGB}{245,245,245}
+\definecolor{linkblue}{RGB}{0,70,140}
+
+% ── Hyperlink styling ───────────────────────────────────
+\hypersetup{
+    colorlinks=true,
+    linkcolor=linkblue,
+    urlcolor=linkblue,
+    citecolor=linkblue,
+}
+
+% ── Code listing style ──────────────────────────────────
+\lstset{
+    basicstyle=\ttfamily\small,
+    backgroundcolor=\color{codebg},
+    frame=single,
+    rulecolor=\color{codegray},
+    breaklines=true,
+    breakatwhitespace=false,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false,
+    tabsize=2,
+}
+
+% ── Header / footer ─────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Search and Rescue Robot -- Project Report}
+\fancyhead[R]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Column types for tables ─────────────────────────────
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+% ── Convenience command for screenshots ─────────────────
+% Usage: \screenshot{filename}{caption}{label}
+% Put your images in a folder called "images/" next to this .tex file.
+\newcommand{\screenshot}[3]{%
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.85\textwidth]{images/#1}
+        \caption{#2}
+        \label{fig:#3}
+    \end{figure}
+}
+
+% ═════════════════════════════════════════════════════════
+\begin{document}
+
+% ── Title page ──────────────────────────────────────────
+\begin{titlepage}
+    \centering
+    \vspace*{3cm}
+    {\Huge\bfseries Search and Rescue Robot\\[0.3cm] Project Report\par}
+    \vspace{1.5cm}
+    {\Large ROS 2 -- Gazebo Harmonic -- BehaviorTree.CPP\par}
+    \vspace{2cm}
+    {\large
+        Stanislav Simanovich -- 23366109\\[0.3cm]
+        Maja Tomczyk -- 23356014\\[1cm]
+        University of Limerick\\[0.3cm]
+        \today
+    }
+    \vfill
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ═════════════════════════════════════════════════════════
+\section{ROS Architecture}
+% ═════════════════════════════════════════════════════════
+
+\subsection{Package Structure}
+
+The project is split into two ROS\,2 packages:
+
+\begin{itemize}
+    \item \textbf{\texttt{search\_rescue\_robot}} -- Contains the robot URDF, Gazebo world, launch files, YAML configuration, and two Python utility nodes (\texttt{battery\_simulator} and \texttt{twist\_relay}).
+    \item \textbf{\texttt{rescue\_bt}} -- Contains the BehaviorTree.CPP mission controller written in C++. This package defines all custom BT nodes and the main \texttt{mission\_bt\_node} executable, along with the XML tree definition (\texttt{rescue\_mission.xml}).
+\end{itemize}
+
+\screenshot{rqt_graph.png}{RQT graph showing all active nodes and topic connections.}{rqt_graph}
+
+\subsection{Nodes}
+
+\begin{description}
+    \item[\texttt{robot\_state\_publisher}] \hfill \\
+    \textit{Package:} \texttt{robot\_state\_publisher} \quad \textit{Language:} C++ \\
+    Reads the URDF and publishes the full TF tree (all link frames) so other nodes know where every part of the robot is.
+
+    \item[\texttt{ros\_gz\_sim} (Gazebo)] \hfill \\
+    \textit{Package:} \texttt{ros\_gz\_sim} \quad \textit{Language:} C++ \\
+    Runs Gazebo Harmonic with the assignment world loaded. The robot is spawned via \texttt{ros\_gz\_sim create} using the \texttt{-topic robot\_description} argument, which reads the URDF from the \texttt{/robot\_description} topic.
+
+    \item[\texttt{ros\_gz\_bridge}] \hfill \\
+    \textit{Package:} \texttt{ros\_gz\_bridge} \quad \textit{Language:} C++ \\
+    Bridges four Gazebo topics into ROS\,2: \texttt{/clock} (simulation time), \texttt{/scan} (LiDAR), \texttt{/camera/image\_raw} (camera), and \texttt{/imu/data} (IMU). Without this bridge, sensor data from Gazebo would not be accessible to ROS nodes.
+
+    \item[\texttt{controller\_manager}] \hfill \\
+    \textit{Package:} \texttt{ros2\_control} \quad \textit{Language:} C++ \\
+    Manages the ros2\_control hardware interface. It loads two controllers: \texttt{joint\_state\_broadcaster} (publishes joint positions/velocities) and \texttt{diff\_drive\_controller} (accepts velocity commands and computes wheel velocities). The controllers are spawned sequentially using \texttt{OnProcessExit} event handlers in the launch file.
+
+    \item[\texttt{twist\_relay}] \hfill \\
+    \textit{Package:} \texttt{search\_rescue\_robot} \quad \textit{Language:} Python \\
+    A relay node. Nav2 outputs velocity commands as \texttt{geometry\_msgs/Twist} on \texttt{/cmd\_vel}, but \texttt{diff\_drive\_controller} expects \texttt{geometry\_msgs/TwistStamped} on \texttt{/diff\_drive\_controller/cmd\_vel}. This node subscribes to one and republishes on the other, adding a timestamp and \texttt{base\_link} frame ID.
+
+    \item[\texttt{battery\_simulator}] \hfill \\
+    \textit{Package:} \texttt{search\_rescue\_robot} \quad \textit{Language:} Python \\
+    Simulates battery drain and recharge at 1\,Hz. Drains at 0.05\%/s when undocked, charges at 2.0\%/s when docked. Publishes \texttt{std\_msgs/Bool} on \texttt{/battery\_level\_low}. Uses hysteresis logic: flag goes \texttt{true} at 20\% and only clears at 90\%, preventing constant toggling. Subscribes to \texttt{/is\_docked} to know when to charge. All thresholds are configurable via ROS parameters.
+
+    \item[\texttt{slam\_toolbox}] \hfill \\
+    \textit{Package:} \texttt{slam\_toolbox} \quad \textit{Language:} C++ \\
+    Runs online asynchronous SLAM using 2D LiDAR scans. Builds a map on the fly and publishes the \texttt{map}~$\rightarrow$~\texttt{odom} transform for global localisation.
+
+    \item[Nav2 stack] \hfill \\
+    \textit{Package:} \texttt{nav2\_bringup} \quad \textit{Language:} C++ \\
+    The full Nav2 navigation stack: \texttt{controller\_server}, \texttt{planner\_server}, \texttt{smoother\_server}, \texttt{behavior\_server}, \texttt{velocity\_smoother}, \texttt{bt\_navigator}, and \texttt{waypoint\_follower}. All lifecycle-managed by \texttt{lifecycle\_manager\_navigation}.
+
+    \item[\texttt{mission\_bt\_node}] \hfill \\
+    \textit{Package:} \texttt{rescue\_bt} \quad \textit{Language:} C++ \\
+    Main mission controller. Loads the behavior tree XML, registers all custom BT node types, places the ROS node on the BT blackboard, then ticks the tree at 10\,Hz. Waits for Nav2 \texttt{navigate\_to\_pose} action server before starting, plus an additional 5\,s delay for lifecycle activation.
+\end{description}
+
+\screenshot{gazebo_world.png}{Robot spawned in the Gazebo assignment world at (0, 0).}{gazebo_world}
+
+\subsection{Topics}
+
+\begin{itemize}
+    \item \texttt{/cmd\_vel} (\texttt{geometry\_msgs/Twist}) -- Nav2 velocity smoother publishes smoothed velocity commands here. \texttt{twist\_relay} subscribes and forwards them as \texttt{TwistStamped}.
+
+    \item \texttt{/diff\_drive\_controller/cmd\_vel} (\texttt{geometry\_msgs/TwistStamped}) -- \texttt{twist\_relay} publishes stamped velocity commands here. The \texttt{diff\_drive\_controller} subscribes and drives the wheels.
+
+    \item \texttt{/diff\_drive\_controller/odom} (\texttt{nav\_msgs/Odometry}) -- The \texttt{diff\_drive\_controller} publishes wheel odometry here. Nav2 and SLAM Toolbox subscribe for localisation.
+
+    \item \texttt{/scan} (\texttt{sensor\_msgs/LaserScan}) -- 360\textdegree{} LiDAR at 10\,Hz, range 0.12--20\,m. Bridged from Gazebo. Consumed by SLAM Toolbox and Nav2 costmaps.
+
+    \item \texttt{/camera/image\_raw} (\texttt{sensor\_msgs/Image}) -- 640$\times$480 RGB camera at 15\,Hz. Bridged from Gazebo. Used during the dam scan task.
+
+    \item \texttt{/imu/data} (\texttt{sensor\_msgs/Imu}) -- IMU at 50\,Hz. Bridged from Gazebo. Available for orientation estimation.
+
+    \item \texttt{/battery\_level\_low} (\texttt{std\_msgs/Bool}) -- Published by \texttt{battery\_simulator}. \texttt{true} when battery drops below 20\%, \texttt{false} once recharged past 90\%. The BT conditions \texttt{CheckBatteryOK} and \texttt{WaitForBatteryOK} subscribe to this.
+
+    \item \texttt{/is\_docked} (\texttt{std\_msgs/Bool}) -- Published by the BT node \texttt{PublishDockStatus}. Tells \texttt{battery\_simulator} whether the robot is at the docking station so it knows to charge instead of drain.
+
+    \item \texttt{/camera\_controller/commands} (\texttt{std\_msgs/Float64}) -- Published by the BT node \texttt{SetCameraAngle}. Commands the revolute camera joint to a specific yaw angle in radians.
+
+    \item \texttt{/clock} (\texttt{rosgraph\_msgs/Clock}) -- Simulation clock bridged from Gazebo. All nodes use this via \texttt{use\_sim\_time: true}.
+\end{itemize}
+
+\subsection{Actions}
+
+The system uses one ROS\,2 action for navigation:
+
+\begin{longtable}{L{3.5cm} L{3.5cm} L{3cm} L{3.5cm}}
+    \toprule
+    \textbf{Action} & \textbf{Type} & \textbf{Server} & \textbf{Client} \\
+    \midrule
+    \texttt{navigate\_to\_pose} & \texttt{nav2\_msgs/ NavigateToPose} & Nav2 \texttt{bt\_navigator} & \texttt{NavigateToWaypoint} (BT node) \\
+    \bottomrule
+\end{longtable}
+
+\textbf{NavigateToPose action details:}
+
+\begin{itemize}
+    \item \textbf{Goal}: A \texttt{geometry\_msgs/PoseStamped} in the \texttt{map} frame containing the target $x$, $y$ position and orientation (yaw converted to quaternion). For example, navigating to the survivor sends goal $(15.1, 11.9)$ in the map frame.
+    \item \textbf{Feedback}: Nav2 provides ongoing feedback including the robot's current pose and estimated time remaining. The BT node polls for completion via the result callback.
+    \item \textbf{Result}: The BT node receives a \texttt{ResultCode}. If \texttt{SUCCEEDED}, the BT node returns \texttt{SUCCESS}. If the goal is rejected, failed, or cancelled, it returns \texttt{FAILURE}. Each navigation call is wrapped in a \texttt{Timeout} decorator (600\,s) to prevent the robot from being stuck indefinitely.
+\end{itemize}
+
+\subsection{Services}
+
+No custom services were created for this project. The Nav2 stack internally uses lifecycle services for node management (e.g., \texttt{lifecycle\_manager\_navigation} transitions nodes through configure/activate states). The system communicates primarily through topics and actions.
+
+
+% ═════════════════════════════════════════════════════════
+\newpage
+\section{Behaviour Tree}
+% ═════════════════════════════════════════════════════════
+
+\subsection{Overall Design}
+
+The behaviour tree is defined in \texttt{rescue\_mission.xml} using BehaviorTree.CPP v4 format. It contains two trees: the main \texttt{RescueMission} tree and a \texttt{DockAndRecharge} subtree. The main tree is structured as a \texttt{ReactiveSequence} at the top level to enforce fire safety on every tick, with an inner \texttt{Sequence} that runs the mission tasks in order.
+
+\subsection{Tree Structure}
+
+% ── TODO: Add a Groot2 screenshot of the tree ───────────
+% Open Groot2, load rescue_mission.xml, and take a screenshot.
+%
+% \screenshot{bt_groot.png}{Behaviour tree visualised in Groot2.}{bt_groot}
+
+\begin{lstlisting}[title={Behaviour tree structure (simplified)}]
+RescueMission (ReactiveSequence "fire_guard")
+|
++-- CheckFireSafe                      [Condition - every tick]
+|
++-- Sequence "mission"
+    |
+    +-- Sequence "task1_survivor_rescue"
+    |   +-- ReactiveSequence
+    |   |   +-- ReactiveFallback
+    |   |   |   +-- CheckBatteryOK     [Condition]
+    |   |   |   +-- SubTree: DockAndRecharge
+    |   |   +-- Timeout (600s)
+    |   |       +-- NavigateToWaypoint (survivor: 15.1, 11.9)
+    |   +-- PublishDockStatus (false)
+    |   +-- WaitSeconds (1.0s)
+    |   +-- PublishObjectTF ("survivor_location": 15.1, 13.4)
+    |   +-- [battery-guarded] NavigateToWaypoint (med_kit: -6.3, -18.4)
+    |   +-- PublishDockStatus (false)
+    |   +-- [battery-guarded] NavigateToWaypoint (survivor_return: 15.1, 11.9)
+    |   +-- PublishDockStatus (false)
+    |
+    +-- Sequence "task2_dam_scan"
+    |   +-- [battery-guarded] NavigateToWaypoint (dam: 8.7, -13.1)
+    |   +-- PublishDockStatus (false)
+    |   +-- SetCameraAngle (0.0 rad)   [centre]
+    |   +-- WaitSeconds (2.0s)
+    |   +-- SetCameraAngle (0.1745)    [10 deg left]
+    |   +-- WaitSeconds (2.0s)
+    |   +-- SetCameraAngle (-0.1745)   [10 deg right]
+    |   +-- WaitSeconds (2.0s)
+    |   +-- SetCameraAngle (0.0 rad)   [back to centre]
+    |
+    +-- Sequence "task5_exit"
+        +-- [battery-guarded] NavigateToWaypoint (exit: 2.9, 15.7)
+        +-- PublishDockStatus (false)
+        +-- WaitSeconds (5.0s)
+
+DockAndRecharge (Sequence)
++-- NavigateToWaypoint (docking_station: 23.5, 0.0)
++-- PublishDockStatus (true)
++-- WaitForBatteryOK
+\end{lstlisting}
+
+\subsection{Node Types Used}
+
+\textbf{Sequence nodes:}
+The inner \texttt{"mission"} Sequence ensures Task~1, Task~2, and Task~5 run in order. Each task also has its own Sequence to chain the steps within that task (e.g., navigate, wait, publish TF, navigate again).
+
+\textbf{Fallback nodes:}
+\texttt{ReactiveFallback} is used for battery handling. On every tick, it first checks \texttt{CheckBatteryOK}. If the battery is fine (\texttt{SUCCESS}), the fallback succeeds immediately and the navigation child proceeds. If the battery is low (\texttt{FAILURE}), the fallback ticks the \texttt{DockAndRecharge} subtree instead, which interrupts whatever navigation was happening and sends the robot to charge.
+
+\textbf{Asynchronous stateful Action nodes:}
+\begin{itemize}
+    \item \texttt{NavigateToWaypoint} -- The main async action node. Sends a \texttt{NavigateToPose} goal to Nav2 in \texttt{onStart()}, returns \texttt{RUNNING} while Nav2 is executing, and checks the result callback in \texttt{onRunning()}. Implements \texttt{onHalted()} to cancel the Nav2 goal if the BT preempts it (e.g., due to low battery). If the goal is initially rejected (Nav2 not ready yet), it retries on the next tick.
+    \item \texttt{WaitSeconds} -- Records a target time in \texttt{onStart()} and returns \texttt{RUNNING} until the clock passes that time.
+    \item \texttt{WaitForBatteryOK} -- Subscribes to \texttt{/battery\_level\_low} and returns \texttt{RUNNING} until the battery is no longer low. Used during the docking sequence to keep the robot stationary until recharged.
+\end{itemize}
+
+\textbf{Decorator nodes:}
+\texttt{Timeout} (built-in BT.CPP decorator) wraps every \texttt{NavigateToWaypoint} call with a 600-second (10-minute) timeout. If navigation takes longer than this, the timeout decorator forces a \texttt{FAILURE}, preventing the robot from being stuck indefinitely.
+
+\textbf{Condition nodes:}
+\begin{itemize}
+    \item \texttt{CheckBatteryOK} -- Subscribes to \texttt{/battery\_level\_low} and returns \texttt{SUCCESS} if the battery is fine, \texttt{FAILURE} if low.
+    \item \texttt{CheckFireSafe} -- Looks up the robot's position via TF (\texttt{map}~$\rightarrow$~\texttt{base\_link}) and calculates the Euclidean distance to the known fire location at $(-14.2, 10.8)$. Returns \texttt{FAILURE} if the robot is closer than 3.0\,m. If the TF lookup fails (e.g., during startup), it defaults to \texttt{SUCCESS} to avoid blocking the mission.
+\end{itemize}
+
+\textbf{Sync Action nodes:}
+\begin{itemize}
+    \item \texttt{PublishObjectTF} -- Publishes a static transform from \texttt{map} to a named child frame (e.g., \texttt{survivor\_location}) at the specified coordinates. Used to report the survivor's location relative to spawn.
+    \item \texttt{SetCameraAngle} -- Publishes a \texttt{Float64} to the camera controller topic to set the revolute camera joint to a specific angle. Used for the dam scan sequence (centre, $+$10\textdegree, $-$10\textdegree).
+    \item \texttt{PublishDockStatus} -- Publishes a \texttt{Bool} to \texttt{/is\_docked} to tell the battery simulator if the robot is docked (charging) or not (draining).
+\end{itemize}
+
+\subsection{Ports (Inputs/Outputs)}
+
+\begin{longtable}{L{3.8cm} L{7cm} L{3cm}}
+    \toprule
+    \textbf{Node} & \textbf{Input Ports} & \textbf{Output Ports} \\
+    \midrule
+    \endhead
+
+    \texttt{NavigateToWaypoint} & \texttt{x} (double), \texttt{y} (double), \texttt{theta} (double, default 0.0), \texttt{description} (string) & None \\
+    \addlinespace
+    \texttt{WaitSeconds} & \texttt{seconds} (double, default 1.0) & None \\
+    \addlinespace
+    \texttt{PublishObjectTF} & \texttt{frame\_name} (string), \texttt{x} (double), \texttt{y} (double) & None \\
+    \addlinespace
+    \texttt{SetCameraAngle} & \texttt{angle} (double, default 0.0) -- yaw in radians & None \\
+    \addlinespace
+    \texttt{PublishDockStatus} & \texttt{docked} (bool) & None \\
+    \addlinespace
+    \texttt{CheckBatteryOK} & None & None \\
+    \addlinespace
+    \texttt{CheckFireSafe} & None & None \\
+    \addlinespace
+    \texttt{WaitForBatteryOK} & None & None \\
+    \bottomrule
+\end{longtable}
+
+All coordinate values are set directly in the XML tree (e.g., \texttt{x="15.1" y="11.9"}). The BT nodes access the shared ROS node via the blackboard (key: \texttt{"node"}), which is set by the \texttt{mission\_bt\_node} main executable before the tree is created.
+
+
+% ═════════════════════════════════════════════════════════
+\newpage
+\section{Navigation Strategy}
+% ═════════════════════════════════════════════════════════
+
+\subsection{Approach: Nav2 with SLAM Toolbox}
+
+The robot uses the \textbf{Nav2 navigation stack} combined with \textbf{SLAM Toolbox} for autonomous navigation. This was chosen because the robot needs to navigate a previously unknown environment (post-disaster building), so it builds a map on the fly rather than relying on a pre-made map.
+
+% ── TODO: Add RViz screenshot showing the map + path ────
+% Launch with use_rviz:=true, let the robot navigate for a bit,
+% then screenshot RViz showing the costmap, planned path, and robot position.
+%
+% \screenshot{rviz_navigation.png}{RViz showing the SLAM-built map, planned path, and robot pose during navigation.}{rviz_nav}
+
+\subsection{How It Works}
+
+\begin{enumerate}
+    \item \textbf{Mapping}: SLAM Toolbox runs in online asynchronous mode, consuming LiDAR scans from \texttt{/scan} and wheel odometry from \texttt{/diff\_drive\_controller/odom}. It produces a 2D occupancy grid map and publishes the \texttt{map}~$\rightarrow$~\texttt{odom} transform, giving the robot a global position estimate.
+
+    \item \textbf{Path planning}: When the BT sends a \texttt{NavigateToPose} goal, Nav2's \textbf{SmacPlanner2D} (lattice-based planner) computes a global path from the robot's current position to the target on the occupancy grid. The planner allows traversal through unknown space (\texttt{allow\_unknown: true}) since the robot is exploring.
+
+    \item \textbf{Path following}: The \textbf{Regulated Pure Pursuit} controller tracks the planned path locally. It adjusts speed based on curvature (slows down around tight turns) and has a desired speed of 0.5\,m/s.
+
+    \item \textbf{Velocity processing}: The velocity smoother smooths the commands from the controller, then \texttt{twist\_relay} converts \texttt{Twist} to \texttt{TwistStamped} and forwards to \texttt{/diff\_drive\_controller/cmd\_vel}.
+
+    \item \textbf{Obstacle avoidance}: Both local and global costmaps use an obstacle layer fed by LiDAR data and an inflation layer (0.55\,m radius, robot radius 0.22\,m). Nav2's recovery behaviours (spin, backup, wait) handle situations where the robot gets stuck.
+\end{enumerate}
+
+\subsection{Navigation to Each Object}
+
+All target coordinates are hardcoded as waypoints in the behavior tree XML, based on the known positions of objects in the Gazebo world:
+
+\begin{longtable}{L{3.5cm} C{2.8cm} C{2cm} L{5.5cm}}
+    \toprule
+    \textbf{Object} & \textbf{Coordinates} & \textbf{Standoff} & \textbf{Notes} \\
+    \midrule
+    \endhead
+
+    Survivor (green cuboid)
+    & $(15.1, 11.9)$
+    & $\sim$1\,m
+    & Nav2 goal tolerance is 0.5\,m; waypoint placed $\sim$1\,m from the actual object. \\
+    \addlinespace
+
+    Medical kit (yellow cube)
+    & $(-6.3, -18.4)$
+    & Close
+    & Robot navigates to the kit then returns to the survivor. \\
+    \addlinespace
+
+    Dam (blue cube)
+    & $(8.7, -13.1)$
+    & $\sim$0.5\,m
+    & After arriving, the camera joint pans to scan the dam. \\
+    \addlinespace
+
+    Docking station (black square)
+    & $(23.5, 0.0)$
+    & Contact
+    & Robot stops at the station and waits for recharge. \\
+    \addlinespace
+
+    Exit (purple cube)
+    & $(2.9, 15.7)$
+    & Contact
+    & Robot touches the exit marker and stops. \\
+    \addlinespace
+
+    Fire (red cylinder)
+    & $(-14.2, 10.8)$
+    & 3.0\,m min
+    & Not a navigation target; exclusion zone enforced by \texttt{CheckFireSafe}. \\
+
+    \bottomrule
+\end{longtable}
+
+% ── TODO: Add screenshots of the robot at key objects ────
+% Take Gazebo screenshots of the robot near each object during the mission.
+%
+% \screenshot{task1_survivor.png}{Robot stopped near the survivor (green cuboid).}{task1}
+% \screenshot{task2_dam_scan.png}{Robot performing the dam scan with camera panning.}{task2}
+% \screenshot{task5_exit.png}{Robot at the exit marker (purple cube).}{task5}
+
+\subsection{Safety Policies}
+
+\textbf{Fire avoidance (Task~4):} The \texttt{CheckFireSafe} condition is placed at the top of the tree inside a \texttt{ReactiveSequence}. This means it is re-evaluated on every single tick of the tree (10\,Hz). If the robot is ever closer than 3.0\,m to the fire at $(-14.2, 10.8)$, the entire mission halts. The distance is calculated using a TF lookup of the robot's \texttt{base\_link} position in the map frame. In practice, Nav2's costmaps should route around the fire, but this condition acts as a hard safety check.
+
+\textbf{Low battery (Task~3):} Every navigation action is wrapped in a \texttt{ReactiveSequence} with a \texttt{ReactiveFallback} that checks battery status. If \texttt{/battery\_level\_low} becomes \texttt{true} mid-navigation, the \texttt{ReactiveFallback} triggers the \texttt{DockAndRecharge} subtree, which:
+
+\begin{enumerate}
+    \item Cancels the current Nav2 goal (via \texttt{onHalted()})
+    \item Navigates to the docking station at $(23.5, 0.0)$
+    \item Publishes \texttt{docked = true} on \texttt{/is\_docked} so the battery simulator starts charging
+    \item Waits until the battery level is restored (above 90\%)
+    \item The mission then resumes from where it left off
+\end{enumerate}
+
+% ── TODO: Add a screenshot of the battery docking ───────
+% Trigger a low battery event and screenshot the robot at the docking station.
+%
+% \screenshot{task3_docking.png}{Robot docked at the charging station during a low battery event.}{task3}
+
+\subsection{Transform Chain}
+
+The navigation system relies on this transform chain:
+
+\begin{lstlisting}
+map -> odom -> base_link -> [sensor frames]
+\end{lstlisting}
+
+\begin{itemize}
+    \item \texttt{map}~$\rightarrow$~\texttt{odom}: Published by SLAM Toolbox (corrects odometry drift)
+    \item \texttt{odom}~$\rightarrow$~\texttt{base\_link}: Published by \texttt{diff\_drive\_controller} (wheel odometry)
+    \item \texttt{base\_link}~$\rightarrow$~\texttt{lidar\_link}, \texttt{camera\_link}, \texttt{imu\_link}: Published by \texttt{robot\_state\_publisher} (from URDF)
+\end{itemize}
+
+% ── TODO: Add TF tree screenshot ─────────────────────────
+% Run: ros2 run tf2_tools view_frames
+% This generates a frames.pdf showing the full TF tree.
+%
+% \screenshot{tf_tree.png}{TF tree showing all transforms published during the mission.}{tf_tree}
+
+
+% ═════════════════════════════════════════════════════════
+\newpage
+\section{References}
+% ═════════════════════════════════════════════════════════
+
+\subsection{ROS 2 and Core Tools}
+\begin{itemize}
+    \item ROS\,2 Jazzy documentation: \url{https://docs.ros.org/en/jazzy/}
+    \item URDF tutorials: \url{https://docs.ros.org/en/jazzy/Tutorials/Intermediate/URDF/URDF-Main.html}
+    \item ros2\_control documentation: \url{https://control.ros.org/jazzy/}
+    \item \texttt{diff\_drive\_controller} documentation: \url{https://control.ros.org/jazzy/doc/ros2_controllers/diff_drive_controller/doc/userdoc.html}
+    \item \texttt{gz\_ros2\_control} integration: \url{https://github.com/ros-controls/gz_ros2_control}
+\end{itemize}
+
+\subsection{Gazebo}
+\begin{itemize}
+    \item Gazebo Harmonic documentation: \url{https://gazebosim.org/docs/harmonic/}
+    \item \texttt{ros\_gz\_sim} and \texttt{ros\_gz\_bridge} packages: \url{https://github.com/gazebosim/ros_gz}
+    \item Gazebo sensor plugins (LiDAR, camera, IMU): \url{https://gazebosim.org/docs/harmonic/sensors}
+\end{itemize}
+
+\subsection{Navigation}
+\begin{itemize}
+    \item Nav2 documentation: \url{https://docs.nav2.org/}
+    \item Regulated Pure Pursuit controller: \url{https://docs.nav2.org/configuration/packages/configuring-regulated-pp.html}
+    \item SLAM Toolbox: \url{https://github.com/SteveMacenski/slam_toolbox}
+\end{itemize}
+
+\subsection{Behaviour Trees}
+\begin{itemize}
+    \item BehaviorTree.CPP v4 documentation: \url{https://www.behaviortree.dev/}
+    \item BehaviorTree.CPP GitHub: \url{https://github.com/BehaviorTree/BehaviorTree.CPP}
+    \item Nav2 BT Navigator plugin: \url{https://docs.nav2.org/configuration/packages/configuring-bt-navigator.html}
+\end{itemize}
+
+\subsection{Tutorials and Guides Used}
+\begin{itemize}
+    \item Articulated Robotics -- ROS\,2 robot building series (URDF, Gazebo, ros2\_control): \url{https://articulatedrobotics.xyz/}
+    \item Nav2 getting started tutorials: \url{https://docs.nav2.org/getting_started/index.html}
+    \item ROS\,2 launch file tutorial: \url{https://docs.ros.org/en/jazzy/Tutorials/Intermediate/Launch/Launch-Main.html}
+    \item ME4857 Tutorials, Lectures and Slides: \url{https://learn.ul.ie/d2l/home/73043}
+\end{itemize}
+
+
+\end{document}

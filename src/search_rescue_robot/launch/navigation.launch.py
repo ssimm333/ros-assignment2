@@ -1,3 +1,9 @@
+# navigation.launch.py
+# Launches all the individual Nav2 server nodes (planner, controller, behavior, etc.)
+# and the lifecycle manager that activates them in order.
+# Based on the default nav2_bringup navigation_launch.py but without the
+# docking server and route server since we dont need those for this assignment.
+
 """Nav2 navigation launch file (based on nav2_bringup, without docking/route servers)."""
 
 import os
@@ -27,7 +33,8 @@ def generate_launch_description():
     use_respawn = LaunchConfiguration('use_respawn')
     log_level = LaunchConfiguration('log_level')
 
-    # Lifecycle-managed nodes (no docking_server, no route_server)
+    # these are all the Nav2 nodes that the lifecycle manager will activate.
+    # they start in an inactive state and get activated in order by the manager.
     lifecycle_nodes = [
         'controller_server',
         'smoother_server',
@@ -38,10 +45,14 @@ def generate_launch_description():
         'waypoint_follower',
     ]
 
+    # remap the TF topics so they work with namespaces
     remappings = [('/tf', 'tf'), ('/tf_static', 'tf_static')]
 
+    # substitute the autostart parameter into the params file
     param_substitutions = {'autostart': autostart}
 
+    # RewrittenYaml lets us override specific params in nav2_params.yaml
+    # without editing the file itself
     configured_params = ParameterFile(
         RewrittenYaml(
             source_file=params_file,
@@ -52,6 +63,7 @@ def generate_launch_description():
         allow_substs=True,
     )
 
+    # force line-buffered logging so messages show up immediately in the terminal
     stdout_linebuf_envvar = SetEnvironmentVariable(
         'RCUTILS_LOGGING_BUFFERED_STREAM', '1'
     )
@@ -88,7 +100,9 @@ def generate_launch_description():
         'log_level', default_value='info', description='log level'
     )
 
-    # standalone nodes
+    # standalone mode: each Nav2 server runs as its own process.
+    # this is easier to debug than composition mode since each node
+    # has its own log output and can be restarted independently.
     load_nodes = GroupAction(
         condition=IfCondition(PythonExpression(['not ', use_composition])),
         actions=[
@@ -185,7 +199,8 @@ def generate_launch_description():
         ],
     )
 
-    # Composition , loaded into shared container
+    # composition mode: all Nav2 nodes load into a single shared container process.
+    # more efficient but harder to debug. we dont use this (use_composition=False).
     load_composable_nodes = GroupAction(
         condition=IfCondition(use_composition),
         actions=[
